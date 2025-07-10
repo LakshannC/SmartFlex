@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -7,22 +7,51 @@ import {
     Animated,
     Image,
 } from 'react-native';
-import {colors, dimensions, fontFamilies, fontSizes} from "../../configuration/constants";
+import { useSelector, useDispatch } from 'react-redux';
+import { colors, dimensions, fontFamilies, fontSizes } from "../../configuration/constants";
 import * as Actions from "../../navigation/NavActions";
-import {RouteNames} from "../../navigation/AppRoutes";
+import { RouteNames } from "../../navigation/AppRoutes";
 import ButtonField from "../../components/ButtonField";
+import { getUserDetailsRequest } from '../../service/networkRequests/userRequests';
+import {setPlanData} from "../../redux/slices/workoutPlanSlice";
+import {showErrorToast} from "../../util/toastActions";
 
 const GenderSelectionScreen = ({ navigation }) => {
-    const [selectedGender, setSelectedGender] = useState(null);
+    const dispatch = useDispatch();
+
+    const { gender } = useSelector(state => state.workoutReducer);
+    const [selectedGender, setSelectedGender] = useState(gender || null);
     const [animation] = useState(new Animated.Value(1));
 
     const genders = [
-        { id: 'male', label: 'Male', icon: require('../../assets/images/male.png') },
-        { id: 'female', label: 'Female', icon: require('../../assets/images/female.png') },
+        { id: 'male', label: 'Male', value: 'Male', icon: require('../../assets/images/male.png') },
+        { id: 'female', label: 'Female', value: 'Female', icon: require('../../assets/images/female.png') },
     ];
+
+    useEffect(() => {
+
+        fetchUserGender();
+    }, []);
+
+    const fetchUserGender = async () => {
+        try {
+            const userDetails = await getUserDetailsRequest();
+            if (userDetails?.data?.data?.gender) {
+                const userGender = userDetails.data.data.gender.toLowerCase();
+                setSelectedGender(userGender);
+                dispatch(setPlanData({ gender: userDetails.data.data.gender }));
+            }
+        } catch (error) {
+            console.error('Error fetching user gender:', error);
+        }
+    };
+
 
     const handleGenderSelect = (genderId) => {
         setSelectedGender(genderId);
+
+        const selected = genders.find(g => g.id === genderId);
+        dispatch(setPlanData({ gender: selected.value }));
 
         Animated.sequence([
             Animated.timing(animation, {
@@ -38,9 +67,16 @@ const GenderSelectionScreen = ({ navigation }) => {
         ]).start();
     };
 
+    const handleContinue = () => {
+        if (!selectedGender) {
+            showErrorToast("Please select gender");
+            return;
+        }
+        Actions.navigate(RouteNames.AGE_SELECTION_SCREEN);
+    };
+
     return (
         <View style={styles.container}>
-
             <View>
                 <Text style={styles.genderTxt}>Select Your Gender</Text>
             </View>
@@ -81,13 +117,26 @@ const GenderSelectionScreen = ({ navigation }) => {
                 })}
             </View>
 
-            <View style={styles.footer}>
-                <ButtonField
-                    buttonHeight={dimensions.heightLevel4}
-                    label={'Next'}
-                    labelColor={colors.white}
-                    onPress={() => Actions.reset(RouteNames.HEIGHT_SELECTION_SCREEN)}
-                />
+            <View style={styles.buttonRow}>
+                <View style={styles.backButton}>
+                    <ButtonField
+                        buttonHeight={dimensions.heightLevel4}
+                        label={'Cancel'}
+                        labelColor={colors.white}
+                        bgColor={colors.txtField}
+                        onPress={() => Actions.reset(RouteNames.TAB_SCREEN)}
+                    />
+                </View>
+
+                <View style={styles.continueButton}>
+                    <ButtonField
+                        buttonHeight={dimensions.heightLevel4}
+                        label={'Continue'}
+                        labelColor={colors.white}
+                        onPress={handleContinue}
+                        disabled={!selectedGender}
+                    />
+                </View>
             </View>
         </View>
     );
@@ -147,11 +196,17 @@ const styles = StyleSheet.create({
         fontSize: fontSizes.fontXXLarge,
         fontFamily: fontFamilies.RobotoBold,
     },
-    footer: {
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         padding:dimensions.heightLevel1,
+        gap: dimensions.heightLevel1,
+    },
+    backButton: {
+        flex: 1,
+    },
+    continueButton: {
+        flex: 1,
     },
 });
 

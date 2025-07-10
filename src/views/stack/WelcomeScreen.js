@@ -31,7 +31,7 @@ const WelcomeScreen= ({navigation}) => {
                         buttonHeight={dimensions.heightLevel4}
                         label={'Next'}
                         labelColor={colors.white}
-                        onPress={() => Actions.navigate(RouteNames.REGISTER_SCREEN)}
+                        onPress={() => Actions.navigate(RouteNames.LOGIN_SCREEN)}
                     />
                 </View>
 

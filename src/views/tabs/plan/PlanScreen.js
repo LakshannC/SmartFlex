@@ -1,8 +1,10 @@
-import {StyleSheet, View} from "react-native";
+import {StyleSheet, Text, View} from "react-native";
 
 const PlanScreen = (navigation) =>{
     return (
-        <View style={styles.container}></View>
+        <View style={styles.container}>
+            <Text>PLANSSSSSSSSSSSSSSSSSS</Text>
+        </View>
     )
 }
 

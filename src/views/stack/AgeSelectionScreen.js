@@ -1,55 +1,65 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { colors, dimensions, fontFamilies, fontSizes } from "../../configuration/constants";
-import ButtonField from "../../components/ButtonField";
-import { setPlanData } from "../../redux/slices/workoutPlanSlice";
 import * as Actions from "../../navigation/NavActions";
 import { RouteNames } from "../../navigation/AppRoutes";
+import ButtonField from "../../components/ButtonField";
+import { getUserDetailsRequest } from '../../service/networkRequests/userRequests';
+import {setPlanData} from "../../redux/slices/workoutPlanSlice";
 
-const WEIGHT_RANGE = { min: 30, max: 200 };
-const DEFAULT_WEIGHT = 70;
-const weights = Array.from(
-    { length: WEIGHT_RANGE.max - WEIGHT_RANGE.min + 1 },
-    (_, i) => WEIGHT_RANGE.min + i
-);
+const AGE_RANGE = { min: 13, max: 100 };
+const DEFAULT_AGE = 25;
+const ages = Array.from({ length: AGE_RANGE.max - AGE_RANGE.min + 1 }, (_, i) => AGE_RANGE.min + i);
 
-const ITEM_HEIGHT = 70;
-
-const WeightSelectionScreen = ({ navigation }) => {
+const AgeSelectionScreen = ({ navigation }) => {
     const dispatch = useDispatch();
-    const { current_weight } = useSelector(state => state.workoutReducer);
-    const [selectedWeight, setSelectedWeight] = useState(current_weight || DEFAULT_WEIGHT);
+    const { age } = useSelector(state => state.workoutReducer);
+    const [selectedAge, setSelectedAge] = useState(age || DEFAULT_AGE);
     const scrollY = useRef(new Animated.Value(0)).current;
     const flatListRef = useRef(null);
 
     useEffect(() => {
-        const index = weights.indexOf(current_weight || DEFAULT_WEIGHT);
-        if (index >= 0 && flatListRef.current) {
-            setTimeout(() => {
-                flatListRef.current.scrollToIndex({
-                    index,
-                    animated: false,
-                });
-            }, 100);
+
+        fetchUserAge();
+    }, []);
+
+    const fetchUserAge = async () => {
+        try {
+            const userDetails = await getUserDetailsRequest();
+            if (userDetails?.data?.data?.age) {
+                const userAge = userDetails.data.data.age;
+                setSelectedAge(userAge);
+                dispatch(setPlanData({ age: userAge }));
+
+                setTimeout(() => {
+                    const index = ages.indexOf(userAge);
+                    flatListRef.current?.scrollToIndex({
+                        index,
+                        animated: false,
+                    });
+                }, 100);
+            }
+        } catch (error) {
+            console.error('Error fetching user age:', error);
         }
-    }, [current_weight]);
+    };
 
     const handleScrollEnd = (event) => {
         const offsetY = event.nativeEvent.contentOffset.y;
-        const index = Math.round(offsetY / ITEM_HEIGHT);
-        const newWeight = weights[Math.min(Math.max(index, 0), weights.length - 1)];
-        setSelectedWeight(newWeight);
-        dispatch(setPlanData({ current_weight: newWeight }));
+        const index = Math.round(offsetY / 70);
+        const newAge = ages[Math.min(Math.max(index, 0), ages.length - 1)];
+        setSelectedAge(newAge);
+        dispatch(setPlanData({ age: newAge }));
     };
 
     const renderItem = ({ item, index }) => {
         const inputRange = [
-            (index - 2) * ITEM_HEIGHT,
-            (index - 1) * ITEM_HEIGHT,
-            index * ITEM_HEIGHT,
-            (index + 1) * ITEM_HEIGHT,
-            (index + 2) * ITEM_HEIGHT,
+            (index - 2) * 70,
+            (index - 1) * 70,
+            index * 70,
+            (index + 1) * 70,
+            (index + 2) * 70,
         ];
 
         const scale = scrollY.interpolate({
@@ -64,27 +74,27 @@ const WeightSelectionScreen = ({ navigation }) => {
             extrapolate: 'clamp',
         });
 
-        const isSelected = item === selectedWeight;
+        const isSelected = item === selectedAge;
 
         return (
-            <Animated.View style={[styles.weightItem, { transform: [{ scale }], opacity }]}>
+            <Animated.View style={[styles.ageItem, { transform: [{ scale }], opacity }]}>
                 <TouchableOpacity
                     onPress={() => {
-                        setSelectedWeight(item);
-                        dispatch(setPlanData({ current_weight: item }));
-                        const index = weights.indexOf(item);
+                        setSelectedAge(item);
+                        dispatch(setPlanData({ age: item }));
+                        const index = ages.indexOf(item);
                         flatListRef.current?.scrollToIndex({ index, animated: true });
                     }}
                     style={[
-                        styles.weightButton,
-                        isSelected && styles.weightButtonSelected
+                        styles.ageButton,
+                        isSelected && styles.ageButtonSelected
                     ]}
                 >
                     <Text style={[
-                        styles.weightText,
-                        isSelected && styles.weightTextSelected
+                        styles.ageText,
+                        isSelected && styles.ageTextSelected
                     ]}>
-                        {item} kg
+                        {item}
                     </Text>
                 </TouchableOpacity>
             </Animated.View>
@@ -92,46 +102,42 @@ const WeightSelectionScreen = ({ navigation }) => {
     };
 
     const handleContinue = () => {
-        dispatch(setPlanData({ current_weight: selectedWeight }));
-        Actions.navigate(RouteNames.WEIGHT_GOAL_SELECTION_SCREEN);
+        Actions.navigate(RouteNames.HEIGHT_SELECTION_SCREEN);
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Select Your Weight</Text>
+            <Text style={styles.title}>How old are you?</Text>
 
             <View style={styles.pickerContainer}>
                 <View style={styles.centerHighlight} />
 
                 <Animated.FlatList
                     ref={flatListRef}
-                    data={weights}
+                    data={ages}
                     keyExtractor={(item) => item.toString()}
                     renderItem={renderItem}
                     showsVerticalScrollIndicator={false}
-                    snapToInterval={ITEM_HEIGHT}
+                    snapToInterval={70}
                     decelerationRate="fast"
                     onMomentumScrollEnd={handleScrollEnd}
                     onScroll={Animated.event(
-                        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                        [{ nativeEvent: { contentOffset: { y: scrollY } }}],
                         { useNativeDriver: true }
                     )}
-                    scrollEventThrottle={16}
-                    contentContainerStyle={styles.listContent}
-                    getItemLayout={(data, index) => ({
-                        length: ITEM_HEIGHT,
-                        offset: ITEM_HEIGHT * index,
+                        scrollEventThrottle={16}
+                        contentContainerStyle={styles.listContent}
+                        getItemLayout={(data, index) => ({
+                        length: 70,
+                        offset: 70 * index,
                         index,
                     })}
-                    initialScrollIndex={weights.indexOf(selectedWeight)}
-                />
-            </View>
+                        initialScrollIndex={ages.indexOf(selectedAge)}
+                        />
+                        </View>
 
-            <View style={styles.selectedWeightContainer}>
-                <Text style={styles.selectedWeightText}>{selectedWeight} kg</Text>
-                <Text style={styles.weightInLbs}>
-                    {Math.round(selectedWeight * 2.20462)} lbs
-                </Text>
+                        <View style={styles.selectedAgeContainer}>
+                    <Text style={styles.selectedAgeText}>{selectedAge} years</Text>
             </View>
 
             <View style={styles.buttonRow}>
@@ -180,54 +186,48 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         top: '50%',
-        height: ITEM_HEIGHT,
+        height: 70,
         backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        transform: [{ translateY: -ITEM_HEIGHT/2 }],
+        transform: [{ translateY: -35 }],
         zIndex: -1,
     },
     listContent: {
-        paddingVertical: dimensions.fullHeight / 2 - ITEM_HEIGHT/2,
+        paddingVertical: dimensions.fullHeight / 2 - 35,
     },
-    weightItem: {
-        height: ITEM_HEIGHT,
+    ageItem: {
+        height: 70,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    weightButton: {
-        width: 120,
-        height: ITEM_HEIGHT - 10,
+    ageButton: {
+        width: 80,
+        height: 60,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 15,
         backgroundColor: colors.primary,
     },
-    weightButtonSelected: {
+    ageButtonSelected: {
         backgroundColor: colors.secondary,
         transform: [{ scale: 1.1 }],
     },
-    weightText: {
+    ageText: {
         color: colors.white,
         fontSize: fontSizes.fontXLarge,
         fontFamily: fontFamilies.RobotoRegular,
     },
-    weightTextSelected: {
+    ageTextSelected: {
         fontFamily: fontFamilies.RobotoBold,
         fontSize: fontSizes.fontXXLarge,
     },
-    selectedWeightContainer: {
+    selectedAgeContainer: {
         alignItems: 'center',
         marginVertical: dimensions.heightLevel3,
     },
-    selectedWeightText: {
+    selectedAgeText: {
         color: colors.white,
-        fontSize: fontSizes.fontXXLarge,
+        fontSize: fontSizes.fontXLarge,
         fontFamily: fontFamilies.RobotoBold,
-    },
-    weightInLbs: {
-        color: colors.white,
-        fontSize: fontSizes.fontLarge,
-        fontFamily: fontFamilies.RobotoRegular,
-        marginTop: dimensions.heightLevel1 / 2,
     },
     buttonRow: {
         flexDirection: 'row',
@@ -243,4 +243,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default WeightSelectionScreen;
+export default AgeSelectionScreen;

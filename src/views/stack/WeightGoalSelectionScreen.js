@@ -1,46 +1,49 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { colors, dimensions, fontFamilies, fontSizes } from "../../configuration/constants";
 import ButtonField from "../../components/ButtonField";
 import { setPlanData } from "../../redux/slices/workoutPlanSlice";
 import * as Actions from "../../navigation/NavActions";
 import { RouteNames } from "../../navigation/AppRoutes";
 
-const WEIGHT_RANGE = { min: 30, max: 200 };
-const DEFAULT_WEIGHT = 70;
-const weights = Array.from(
-    { length: WEIGHT_RANGE.max - WEIGHT_RANGE.min + 1 },
-    (_, i) => WEIGHT_RANGE.min + i
+const GOAL_RANGE = { min: 30, max: 200 };
+const DEFAULT_GOAL = 75;
+const goals = Array.from(
+    { length: GOAL_RANGE.max - GOAL_RANGE.min + 1 },
+    (_, i) => GOAL_RANGE.min + i
 );
 
 const ITEM_HEIGHT = 70;
 
-const WeightSelectionScreen = ({ navigation }) => {
+const WeightGoalSelectionScreen = ({ navigation }) => {
     const dispatch = useDispatch();
-    const { current_weight } = useSelector(state => state.workoutReducer);
-    const [selectedWeight, setSelectedWeight] = useState(current_weight || DEFAULT_WEIGHT);
+    const { current_weight, goal_weight } = useSelector(state => state.workoutReducer);
+    const [selectedGoal, setSelectedGoal] = useState(goal_weight || (current_weight ? Math.min(current_weight + 5, GOAL_RANGE.max) : DEFAULT_GOAL));
     const scrollY = useRef(new Animated.Value(0)).current;
     const flatListRef = useRef(null);
 
     useEffect(() => {
-        const index = weights.indexOf(current_weight || DEFAULT_WEIGHT);
-        if (index >= 0 && flatListRef.current) {
-            setTimeout(() => {
+        const defaultGoal = goal_weight || (current_weight ? Math.min(current_weight + 5, GOAL_RANGE.max) : DEFAULT_GOAL);
+        setSelectedGoal(defaultGoal);
+
+        setTimeout(() => {
+            const index = goals.indexOf(defaultGoal);
+            if (index >= 0 && flatListRef.current) {
                 flatListRef.current.scrollToIndex({
                     index,
                     animated: false,
                 });
-            }, 100);
-        }
-    }, [current_weight]);
+            }
+        }, 100);
+    }, [current_weight, goal_weight]);
 
     const handleScrollEnd = (event) => {
         const offsetY = event.nativeEvent.contentOffset.y;
         const index = Math.round(offsetY / ITEM_HEIGHT);
-        const newWeight = weights[Math.min(Math.max(index, 0), weights.length - 1)];
-        setSelectedWeight(newWeight);
-        dispatch(setPlanData({ current_weight: newWeight }));
+        const goal = goals[Math.min(Math.max(index, 0), goals.length - 1)];
+        setSelectedGoal(goal);
+        dispatch(setPlanData({ goal_weight: goal }));
     };
 
     const renderItem = ({ item, index }) => {
@@ -64,48 +67,60 @@ const WeightSelectionScreen = ({ navigation }) => {
             extrapolate: 'clamp',
         });
 
-        const isSelected = item === selectedWeight;
+        const isSelected = item === selectedGoal;
+        const difference = current_weight ? item - current_weight : 0;
 
         return (
-            <Animated.View style={[styles.weightItem, { transform: [{ scale }], opacity }]}>
+            <Animated.View style={[styles.goalItem, { transform: [{ scale }], opacity }]}>
                 <TouchableOpacity
                     onPress={() => {
-                        setSelectedWeight(item);
-                        dispatch(setPlanData({ current_weight: item }));
-                        const index = weights.indexOf(item);
+                        setSelectedGoal(item);
+                        dispatch(setPlanData({ goal_weight: item }));
+                        const index = goals.indexOf(item);
                         flatListRef.current?.scrollToIndex({ index, animated: true });
                     }}
                     style={[
-                        styles.weightButton,
-                        isSelected && styles.weightButtonSelected
+                        styles.goalButton,
+                        isSelected && styles.goalButtonSelected,
+                        difference > 0 && styles.gainItem,
+                        difference < 0 && styles.lossItem
                     ]}
                 >
                     <Text style={[
-                        styles.weightText,
-                        isSelected && styles.weightTextSelected
+                        styles.goalText,
+                        isSelected && styles.goalTextSelected
                     ]}>
                         {item} kg
                     </Text>
+                    {isSelected && current_weight && (
+                        <Text style={[
+                            styles.differenceText,
+                            difference > 0 && styles.gainText,
+                            difference < 0 && styles.lossText
+                        ]}>
+                            {difference > 0 ? `+${difference}` : difference} kg
+                        </Text>
+                    )}
                 </TouchableOpacity>
             </Animated.View>
         );
     };
 
     const handleContinue = () => {
-        dispatch(setPlanData({ current_weight: selectedWeight }));
-        Actions.navigate(RouteNames.WEIGHT_GOAL_SELECTION_SCREEN);
+        dispatch(setPlanData({ goal_weight: selectedGoal }));
+        Actions.navigate(RouteNames.PLAN_CONFIRMATION_SCREEN);
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Select Your Weight</Text>
+            <Text style={styles.title}>Select Your Goal Weight</Text>
 
             <View style={styles.pickerContainer}>
                 <View style={styles.centerHighlight} />
 
                 <Animated.FlatList
                     ref={flatListRef}
-                    data={weights}
+                    data={goals}
                     keyExtractor={(item) => item.toString()}
                     renderItem={renderItem}
                     showsVerticalScrollIndicator={false}
@@ -123,15 +138,22 @@ const WeightSelectionScreen = ({ navigation }) => {
                         offset: ITEM_HEIGHT * index,
                         index,
                     })}
-                    initialScrollIndex={weights.indexOf(selectedWeight)}
+                    initialScrollIndex={goals.indexOf(selectedGoal)}
                 />
             </View>
 
-            <View style={styles.selectedWeightContainer}>
-                <Text style={styles.selectedWeightText}>{selectedWeight} kg</Text>
-                <Text style={styles.weightInLbs}>
-                    {Math.round(selectedWeight * 2.20462)} lbs
-                </Text>
+            <View style={styles.selectedGoalContainer}>
+                <Text style={styles.selectedGoalText}>{selectedGoal} kg</Text>
+                {current_weight && (
+                    <Text style={[
+                        styles.summaryText,
+                        selectedGoal > current_weight && styles.gainText,
+                        selectedGoal < current_weight && styles.lossText
+                    ]}>
+                        {selectedGoal > current_weight ? 'Gain ' : 'Lose '}
+                        {Math.abs(selectedGoal - current_weight)} kg
+                    </Text>
+                )}
             </View>
 
             <View style={styles.buttonRow}>
@@ -188,12 +210,12 @@ const styles = StyleSheet.create({
     listContent: {
         paddingVertical: dimensions.fullHeight / 2 - ITEM_HEIGHT/2,
     },
-    weightItem: {
+    goalItem: {
         height: ITEM_HEIGHT,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    weightButton: {
+    goalButton: {
         width: 120,
         height: ITEM_HEIGHT - 10,
         justifyContent: 'center',
@@ -201,33 +223,52 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         backgroundColor: colors.primary,
     },
-    weightButtonSelected: {
+    goalButtonSelected: {
         backgroundColor: colors.secondary,
         transform: [{ scale: 1.1 }],
     },
-    weightText: {
+    gainItem: {
+        borderTopWidth: 3,
+        borderTopColor: colors.success,
+    },
+    lossItem: {
+        borderTopWidth: 3,
+        borderTopColor: colors.danger,
+    },
+    goalText: {
         color: colors.white,
         fontSize: fontSizes.fontXLarge,
         fontFamily: fontFamilies.RobotoRegular,
     },
-    weightTextSelected: {
+    goalTextSelected: {
         fontFamily: fontFamilies.RobotoBold,
         fontSize: fontSizes.fontXXLarge,
     },
-    selectedWeightContainer: {
+    selectedGoalContainer: {
         alignItems: 'center',
         marginVertical: dimensions.heightLevel3,
     },
-    selectedWeightText: {
+    selectedGoalText: {
         color: colors.white,
         fontSize: fontSizes.fontXXLarge,
         fontFamily: fontFamilies.RobotoBold,
     },
-    weightInLbs: {
+    summaryText: {
         color: colors.white,
-        fontSize: fontSizes.fontLarge,
-        fontFamily: fontFamilies.RobotoRegular,
+        fontSize: fontSizes.fontXLarge,
+        fontFamily: fontFamilies.RobotoMedium,
         marginTop: dimensions.heightLevel1 / 2,
+    },
+    differenceText: {
+        fontSize: fontSizes.fontSmall,
+        fontFamily: fontFamilies.RobotoRegular,
+        marginTop: 2,
+    },
+    gainText: {
+        color: colors.success,
+    },
+    lossText: {
+        color: colors.danger,
     },
     buttonRow: {
         flexDirection: 'row',
@@ -243,4 +284,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default WeightSelectionScreen;
+export default WeightGoalSelectionScreen;

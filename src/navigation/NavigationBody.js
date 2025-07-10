@@ -12,7 +12,7 @@ export const screenOptions = {
 
 const NavigationBody = () => {
     return (
-        <Stack.Navigator screenOptions={screenOptions} initialRouteName={RouteNames.WELCOME_SCREEN}>
+        <Stack.Navigator screenOptions={screenOptions} initialRouteName={RouteNames.SPLASH_SCREEN}>
             {
                 AppRoutes.map((route, index) => (
                     <Stack.Screen name={route.key} component={route.component} key={index}/>

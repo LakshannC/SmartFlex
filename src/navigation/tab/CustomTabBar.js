@@ -80,7 +80,7 @@ const CustomTabBar = ({navigation}) => {
                             <TouchableOpacity
                                 key={'add_ico'}
                                 style={{alignItems: 'center'}}
-                                onPress={() => Actions.navigate(RouteNames.LOGIN_SCREEN)}>
+                                onPress={() => Actions.navigate(RouteNames.GENDER_SELECTION_SCREEN)}>
                                 <Image
                                     source={newPlan}
                                     style={styles.addIcon}
