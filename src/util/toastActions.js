@@ -1,5 +1,5 @@
 import Snackbar from "react-native-snackbar";
-import {colors, fontFamilies} from "../configuration/constants";
+import {colors} from "../configuration/constants";
 
 export const showSuccessToast = (message) => {
     Snackbar.dismiss();
@@ -7,7 +7,6 @@ export const showSuccessToast = (message) => {
         text: message ?? 'Success',
         backgroundColor: colors.success,
         duration: Snackbar.LENGTH_LONG,
-        fontFamily: fontFamilies.RobotoMedium,
         textColor: colors.white
     });
 };
@@ -18,7 +17,6 @@ export const showErrorToast = (message) => {
         text: message ?? 'Something went wrong',
         backgroundColor: colors.danger,
         duration: Snackbar.LENGTH_LONG,
-        fontFamily: fontFamilies.RobotoMedium,
         textColor: colors.white
     });
 };
@@ -29,7 +27,6 @@ export const showInfoToast = (message) => {
         text: message ?? '&lt;INFO&gt;',
         backgroundColor: colors.gray,
         duration: Snackbar.LENGTH_LONG,
-        fontFamily: fontFamilies.RobotoMedium,
         textColor: colors.black
     });
 };

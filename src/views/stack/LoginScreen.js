@@ -6,8 +6,12 @@ import {colors, dimensions, fontFamilies, fontSizes} from "../../configuration/c
 import * as Actions from "../../navigation/NavActions";
 import {RouteNames} from "../../navigation/AppRoutes";
 import ButtonField from "../../components/ButtonField";
-
 const LoginScreen = ({navigation}) => {
+
+    const onPressLogin = async ()=>{
+
+    }
+
     return (
         <View style={styles.container}>
             <View style={{flex:1}}>
