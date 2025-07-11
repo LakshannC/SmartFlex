@@ -7,7 +7,6 @@ import * as Actions from "../../navigation/NavActions";
 import {RouteNames} from "../../navigation/AppRoutes";
 import TextField from "../../components/TextField";
 import logo from "../../assets/images/image_logo.webp";
-import {BASE_URL} from "../../service/networkConfig/basicConfig";
 import DropdownField from "../../components/DropdownField";
 import {showErrorToast, showSuccessToast} from "../../util/toastActions";
 import {userRegisterRequest} from "../../service/networkRequests/authRequests";

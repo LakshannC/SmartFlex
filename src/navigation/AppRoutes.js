@@ -12,6 +12,8 @@ import HeightSelectionScreen from "../views/stack/HeightSelectionScreen";
 import WeightSelectionScreen from "../views/stack/WeightSelectionScreen";
 import GoalSelectionScreen from "../views/stack/GoalSelectionScreen";
 import PhysicalLevelSelectionScreen from "../views/stack/PhysicalLevelSelectionScreen";
+import WorkoutStartScreen from "../views/stack/WorkoutStartScreen";
+import TestScreen from "../views/stack/TestScreen";
 
 const HomeActiveIcon = require('../assets/images/tabs/icon_home_active.webp');
 const HomeInactiveIcon = require('../assets/images/tabs/icon_home_inactive.webp');
@@ -35,6 +37,9 @@ export const RouteNames ={
     GOAL_SELECTION_SCREEN: 'GOAL_SELECTION_SCREEN',
     PHYSICAL_LEVEL_SELECTION_SCREEN: 'PHYSICAL_LEVEL_SELECTION_SCREEN',
 
+    WORKOUT_START_SCREEN:'WORKOUT_START_SCREEN',
+
+
     TAB_SCREEN: 'TAB_SCREEN',
 
     HOME_TAB: 'HOME_TAB',
@@ -49,12 +54,22 @@ export const RouteNames ={
     ACCOUNT_TAB: 'ACCOUNT_TAB',
     ACCOUNT_SCREEN: 'ACCOUNT_SCREEN',
 
+    TEST_SCREEN:'TEST_SCREEN',
+
 };
 
 export const AppRoutes = [
     {
+      key:RouteNames.WORKOUT_START_SCREEN,
+      component:WorkoutStartScreen,
+    },
+    {
         key: RouteNames.SPLASH_SCREEN,
         component: SplashScreen,
+    },
+    {
+        key: RouteNames.TEST_SCREEN,
+        component: TestScreen,
     },
     {
         key: RouteNames.WELCOME_SCREEN,

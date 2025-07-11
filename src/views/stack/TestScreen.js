@@ -1,28 +1,26 @@
-import {FlatList, Image, StyleSheet, Text, TouchableOpacity, View} from "react-native";
-import {colors, dimensions, fontFamilies, fontSizes} from "../../../configuration/constants";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
+import { colors, dimensions, fontFamilies, fontSizes } from '../../configuration/constants';
 
-const TipsScreen = (navigation) =>{
+const samplePlans = [
+    {
+        id: '1',
+        name: 'Upper Body Power',
+        level: 'Intermediate',
+        duration: '40-50 min',
+        calories: '250 kcal',
+        image: require('../../assets/images/icon_homeworkout.webp'), // replace with your icon
+    },
+    {
+        id: '2',
+        name: 'Upper Body Power',
+        level: 'Intermediate',
+        duration: '40-50 min',
+        calories: '250 kcal',
+        image: require('../../assets/images/icon_homeworkout.webp'),
+    }
+];
 
-    const samplePlans = [
-        {
-            id: '1',
-            name: 'Upper Body Power',
-            level: 'Intermediate',
-            duration: '40-50 min',
-            calories: '250 kcal',
-            image: require('../../../assets/images/icon_homeworkout.webp'), // replace with your icon
-        },
-        {
-            id: '2',
-            name: 'Upper Body Power',
-            level: 'Intermediate',
-            duration: '40-50 min',
-            calories: '250 kcal',
-            image: require('../../../assets/images/icon_homeworkout.webp'),
-        }
-    ];
-
-
+const ActivePlansScreen = () => {
     return (
         <View style={styles.container}>
 
@@ -73,7 +71,7 @@ const TipsScreen = (navigation) =>{
 
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
@@ -186,4 +184,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default TipsScreen;
+export default ActivePlansScreen;
