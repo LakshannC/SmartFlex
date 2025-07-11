@@ -1,15 +1,48 @@
-import {Image, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
-
+import {Image, Keyboard, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import logo from "../../assets/images/image_logo.webp";
 import TextField from "../../components/TextField";
-import {colors, dimensions, fontFamilies, fontSizes} from "../../configuration/constants";
+import {colors, dimensions, fontFamilies, fontSizes, regexes} from "../../configuration/constants";
 import * as Actions from "../../navigation/NavActions";
 import {RouteNames} from "../../navigation/AppRoutes";
 import ButtonField from "../../components/ButtonField";
+import {useEffect,useCallback, useState} from "react";
+import {userLoginRequest} from "../../service/networkRequests/authRequests";
 const LoginScreen = ({navigation}) => {
 
-    const onPressLogin = async ()=>{
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [emailErrorText, setEmailErrorText] = useState("");
 
+    useEffect(() => {
+        return navigation.addListener('focus', ()=> {
+
+        });
+    }, [navigation])
+
+    const onLogin = async () => {
+        Keyboard.dismiss();
+        if(!validateInputFields()){
+            const data = {
+                email,
+                password
+            }
+            const result = await userLoginRequest(data);
+            if(result?.code === 200){
+               Actions.reset(RouteNames.TAB_SCREEN);
+            }
+        }
+    }
+
+    const validateEmail = (email) =>{
+        if(email && regexes.email_validation.test(email)){
+            setEmailErrorText(null);
+        } else{
+            setEmailErrorText('Invalid email address');
+        }
+    }
+
+    const validateInputFields = () => {
+        return(!email || !password || emailErrorText);
     }
 
     return (
@@ -29,6 +62,12 @@ const LoginScreen = ({navigation}) => {
                         <TextField
                             height={dimensions.heightLevel4}
                             placeholder={'Email'}
+                            value={email}
+                            onChangeText={useCallback((text) => {
+                                setEmail(text);
+                                validateEmail(text);
+                            }, [email])}
+                            errorText={emailErrorText}
                         />
                     </View>
 
@@ -37,6 +76,9 @@ const LoginScreen = ({navigation}) => {
                         height={dimensions.heightLevel4}
                         placeholder={'Password'}
                         isPassword
+                        onChangeText={useCallback((text) => {
+                            setPassword(text)
+                        }, [password])}
                         />
                     </View>
 
@@ -62,7 +104,8 @@ const LoginScreen = ({navigation}) => {
                     buttonHeight={dimensions.heightLevel4}
                     label={'Sign In'}
                     labelColor={colors.white}
-                    onPress={() => Actions.reset(RouteNames.GENDER_SELECTION_SCREEN)}
+                    disabled={validateInputFields()}
+                    onPress={useCallback(onLogin, [email, password])}
                     />
                 </View>
             </View>

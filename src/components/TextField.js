@@ -30,7 +30,7 @@ const TextField = ({
                        autoFocus
                    }) => {
 
-    const labelTxtColor = colors.white;
+    const labelTxtColor = enabled === false ? colors.black : colors.white;
     const backgroundColor = enabled === false ? colors.lightGray : (bgColor ?? colors.txtField);
     const paddingVertical = isSearch ? 0 : dimensions.heightLevel1 / 3;
     const borderColor = errorText ? colors.danger : colors.white;
@@ -215,12 +215,12 @@ const classicStyles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: dimensions.heightLevel2 / 2,
-        borderRadius: 0,
-        borderWidth: 1
+        borderRadius: 10,
+        // borderWidth: 1
     },
     label: {
         width: '100%',
-        color: colors.black,
+        color: colors.white,
         fontFamily: fontFamilies.RobotoRegular,
         fontSize: fontSizes.fontMidMedium,
     },

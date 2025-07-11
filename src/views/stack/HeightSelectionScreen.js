@@ -1,127 +1,145 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-    View,
-    Text,
-    FlatList,
-    StyleSheet,
-    Animated,
-} from 'react-native';
-import {colors, dimensions, fontFamilies, fontSizes} from "../../configuration/constants";
+import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
+import { colors, dimensions, fontFamilies, fontSizes } from "../../configuration/constants";
 import * as Actions from "../../navigation/NavActions";
-import {RouteNames} from "../../navigation/AppRoutes";
+import { RouteNames } from "../../navigation/AppRoutes";
 import ButtonField from "../../components/ButtonField";
+import { getUserDetailsRequest } from '../../service/networkRequests/userRequests';
+import {setPlanData} from "../../redux/slices/workoutPlanSlice";
 
-
-const ITEM_HEIGHT = 50;
 const HEIGHT_RANGE = { min: 120, max: 230 };
-const DEFAULT_HEIGHT = 173;
-
-const heights = Array.from(
-    { length: HEIGHT_RANGE.max - HEIGHT_RANGE.min + 1 },
-    (_, i) => HEIGHT_RANGE.min + i
-);
-
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
+const DEFAULT_HEIGHT = 170;
+const heights = Array.from({ length: HEIGHT_RANGE.max - HEIGHT_RANGE.min + 1 }, (_, i) => HEIGHT_RANGE.min + i);
 
 const HeightSelectionScreen = ({ navigation }) => {
-    const [selectedHeight, setSelectedHeight] = useState(DEFAULT_HEIGHT);
-    const flatListRef = useRef(null);
+    const dispatch = useDispatch();
+    const { height } = useSelector(state => state.workoutReducer);
+    const [selectedHeight, setSelectedHeight] = useState(height || DEFAULT_HEIGHT);
     const scrollY = useRef(new Animated.Value(0)).current;
+    const flatListRef = useRef(null);
 
     useEffect(() => {
-        const index = heights.indexOf(DEFAULT_HEIGHT);
-        setTimeout(() => {
-            flatListRef.current?.scrollToOffset({
-                offset: index * ITEM_HEIGHT,
-                animated: false,
-            });
-        }, 50);
+        const fetchUserHeight = async () => {
+            try {
+                const userDetails = await getUserDetailsRequest();
+                if (userDetails?.data?.data?.height) {
+                    const userHeight = userDetails.data.data.height;
+                    setSelectedHeight(userHeight);
+                    dispatch(setPlanData({ height: userHeight }));
+
+                    setTimeout(() => {
+                        const index = heights.indexOf(userHeight);
+                        flatListRef.current?.scrollToIndex({
+                            index,
+                            animated: false,
+                        });
+                    }, 100);
+                }
+            } catch (error) {
+                console.error('Error fetching user height:', error);
+            }
+        };
+
+        fetchUserHeight();
     }, []);
 
-    const handleMomentumScrollEnd = (event) => {
+    const handleScrollEnd = (event) => {
         const offsetY = event.nativeEvent.contentOffset.y;
-        const index = Math.round(offsetY / ITEM_HEIGHT);
+        const index = Math.round(offsetY / 70);
         const newHeight = heights[Math.min(Math.max(index, 0), heights.length - 1)];
         setSelectedHeight(newHeight);
+        dispatch(setPlanData({ height: newHeight }));
     };
 
     const renderItem = ({ item, index }) => {
         const inputRange = [
-            (index - 1) * ITEM_HEIGHT,
-            index * ITEM_HEIGHT,
-            (index + 1) * ITEM_HEIGHT,
+            (index - 2) * 70,
+            (index - 1) * 70,
+            index * 70,
+            (index + 1) * 70,
+            (index + 2) * 70,
         ];
 
         const scale = scrollY.interpolate({
             inputRange,
-            outputRange: [0.8, 1.2, 0.8],
+            outputRange: [0.7, 0.85, 1, 0.85, 0.7],
             extrapolate: 'clamp',
         });
 
         const opacity = scrollY.interpolate({
             inputRange,
-            outputRange: [0.5, 1, 0.5],
+            outputRange: [0.3, 0.6, 1, 0.6, 0.3],
             extrapolate: 'clamp',
         });
 
         const isSelected = item === selectedHeight;
 
         return (
-            <Animated.View
-                style={{
-                    height: ITEM_HEIGHT,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    transform: [{ scale }],
-                    opacity,
-                }}
-            >
-                <Text
-                    style={{
-                        color: isSelected ? '#ffffff' : '#888',
-                        fontSize: isSelected ? 26 : 20,
-                        fontWeight: isSelected ? 'bold' : 'normal',
+            <Animated.View style={[styles.heightItem, { transform: [{ scale }], opacity }]}>
+                <TouchableOpacity
+                    onPress={() => {
+                        setSelectedHeight(item);
+                        dispatch(setPlanData({ height: item }));
+                        const index = heights.indexOf(item);
+                        flatListRef.current?.scrollToIndex({ index, animated: true });
                     }}
+                    style={[
+                        styles.heightButton,
+                        isSelected && styles.heightButtonSelected
+                    ]}
                 >
-                    {item}
-                </Text>
+                    <Text style={[
+                        styles.heightText,
+                        isSelected && styles.heightTextSelected
+                    ]}>
+                        {item} cm
+                    </Text>
+                </TouchableOpacity>
             </Animated.View>
         );
     };
 
+    const handleContinue = () => {
+        Actions.navigate(RouteNames.WEIGHT_SELECTION_SCREEN);
+    };
+
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>What is your Height?</Text>
+            <Text style={styles.title}>What's your height?</Text>
 
-            <View style={styles.pickerWrapper}>
-                <View style={[styles.highlightLine, { top: dimensions.fullHeight / 2 - ITEM_HEIGHT / 2 }]} />
-                <View style={[styles.highlightLine, { top: dimensions.fullHeight / 2 + ITEM_HEIGHT / 2 }]} />
+            <View style={styles.pickerContainer}>
+                <View style={styles.centerHighlight} />
 
-                <AnimatedFlatList
+                <Animated.FlatList
                     ref={flatListRef}
                     data={heights}
                     keyExtractor={(item) => item.toString()}
+                    renderItem={renderItem}
                     showsVerticalScrollIndicator={false}
-                    bounces={false}
-                    snapToInterval={ITEM_HEIGHT}
+                    snapToInterval={70}
                     decelerationRate="fast"
-                    onMomentumScrollEnd={handleMomentumScrollEnd}
+                    onMomentumScrollEnd={handleScrollEnd}
                     onScroll={Animated.event(
                         [{ nativeEvent: { contentOffset: { y: scrollY } } }],
                         { useNativeDriver: true }
                     )}
                     scrollEventThrottle={16}
-                    contentContainerStyle={{
-                        paddingTop: dimensions.fullHeight / 2 - ITEM_HEIGHT / 2,
-                        paddingBottom: dimensions.fullHeight / 2 - ITEM_HEIGHT / 2,
-                    }}
-                    renderItem={renderItem}
-                    getItemLayout={(_, index) => ({
-                        length: ITEM_HEIGHT,
-                        offset: ITEM_HEIGHT * index,
+                    contentContainerStyle={styles.listContent}
+                    getItemLayout={(data, index) => ({
+                        length: 70,
+                        offset: 70 * index,
                         index,
                     })}
+                    initialScrollIndex={heights.indexOf(selectedHeight)}
                 />
+            </View>
+
+            <View style={styles.selectedHeightContainer}>
+                <Text style={styles.selectedHeightText}>{selectedHeight} cm</Text>
+                <Text style={styles.heightInFeet}>
+                    {Math.floor(selectedHeight / 30.48)} ft {Math.round((selectedHeight % 30.48) / 2.54)} in
+                </Text>
             </View>
 
             <View style={styles.buttonRow}>
@@ -131,7 +149,7 @@ const HeightSelectionScreen = ({ navigation }) => {
                         label={'Back'}
                         labelColor={colors.white}
                         bgColor={colors.txtField}
-                        onPress={() => Actions.reset(RouteNames.HEIGHT_SELECTION_SCREEN)}
+                        onPress={() => navigation.goBack()}
                     />
                 </View>
 
@@ -140,10 +158,9 @@ const HeightSelectionScreen = ({ navigation }) => {
                         buttonHeight={dimensions.heightLevel4}
                         label={'Continue'}
                         labelColor={colors.white}
-                        onPress={() => Actions.reset(RouteNames.WEIGHT_SELECTION_SCREEN)}
+                        onPress={handleContinue}
                     />
                 </View>
-
             </View>
         </View>
     );
@@ -153,31 +170,77 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingTop: dimensions.paddingLevel8,
+        backgroundColor: colors.background,
     },
     title: {
-        fontFamily:fontFamilies.RobotoBold,
+        fontFamily: fontFamilies.RobotoBold,
         fontSize: fontSizes.fontXXLarge,
         color: colors.white,
-        fontWeight: '600',
         textAlign: 'center',
-        marginBottom: dimensions.heightLevel3,
+        marginBottom: dimensions.heightLevel4,
     },
-    pickerWrapper: {
+    pickerContainer: {
         flex: 1,
         position: 'relative',
     },
-    highlightLine: {
+    centerHighlight: {
         position: 'absolute',
-        left: dimensions.heightLevel5,
-        right: dimensions.heightLevel5,
-        height: 4,
+        left: 0,
+        right: 0,
+        top: '50%',
+        height: 70,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        transform: [{ translateY: -35 }],
+        zIndex: -1,
+    },
+    listContent: {
+        paddingVertical: dimensions.fullHeight / 2 - 35,
+    },
+    heightItem: {
+        height: 70,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    heightButton: {
+        width: 120,
+        height: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 15,
         backgroundColor: colors.primary,
-        zIndex: 10,
+    },
+    heightButtonSelected: {
+        backgroundColor: colors.secondary,
+        transform: [{ scale: 1.1 }],
+    },
+    heightText: {
+        color: colors.white,
+        fontSize: fontSizes.fontXLarge,
+        fontFamily: fontFamilies.RobotoRegular,
+    },
+    heightTextSelected: {
+        fontFamily: fontFamilies.RobotoBold,
+        fontSize: fontSizes.fontXXLarge,
+    },
+    selectedHeightContainer: {
+        alignItems: 'center',
+        marginVertical: dimensions.heightLevel3,
+    },
+    selectedHeightText: {
+        color: colors.white,
+        fontSize: fontSizes.fontXXLarge,
+        fontFamily: fontFamilies.RobotoBold,
+    },
+    heightInFeet: {
+        color: colors.white,
+        fontSize: fontSizes.fontLarge,
+        fontFamily: fontFamilies.RobotoRegular,
+        marginTop: dimensions.heightLevel1 / 2,
     },
     buttonRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        padding:dimensions.heightLevel1,
+        padding: dimensions.heightLevel1,
         gap: dimensions.heightLevel1,
     },
     backButton: {

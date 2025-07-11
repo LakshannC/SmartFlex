@@ -14,6 +14,10 @@ import GoalSelectionScreen from "../views/stack/GoalSelectionScreen";
 import PhysicalLevelSelectionScreen from "../views/stack/PhysicalLevelSelectionScreen";
 import WorkoutStartScreen from "../views/stack/WorkoutStartScreen";
 import TestScreen from "../views/stack/TestScreen";
+import UserProfileScreen from "../views/tabs/account/UserProfileScreen";
+import AgeSelectionScreen from "../views/stack/AgeSelectionScreen";
+import WeightGoalSelectionScreen from "../views/stack/WeightGoalSelectionScreen";
+import PlanConfirmationScreen from "../views/stack/PlanConfirmationScreen";
 
 const HomeActiveIcon = require('../assets/images/tabs/icon_home_active.webp');
 const HomeInactiveIcon = require('../assets/images/tabs/icon_home_inactive.webp');
@@ -37,9 +41,6 @@ export const RouteNames ={
     GOAL_SELECTION_SCREEN: 'GOAL_SELECTION_SCREEN',
     PHYSICAL_LEVEL_SELECTION_SCREEN: 'PHYSICAL_LEVEL_SELECTION_SCREEN',
 
-    WORKOUT_START_SCREEN:'WORKOUT_START_SCREEN',
-
-
     TAB_SCREEN: 'TAB_SCREEN',
 
     HOME_TAB: 'HOME_TAB',
@@ -53,6 +54,7 @@ export const RouteNames ={
 
     ACCOUNT_TAB: 'ACCOUNT_TAB',
     ACCOUNT_SCREEN: 'ACCOUNT_SCREEN',
+    USER_PROFILE_SCREEN: 'USER_PROFILE_SCREEN',
 
     TEST_SCREEN:'TEST_SCREEN',
 
@@ -88,12 +90,24 @@ export const AppRoutes = [
         component: GenderSelectionScreen,
     },
     {
+        key: RouteNames.AGE_SELECTION_SCREEN,
+        component: AgeSelectionScreen,
+    },
+    {
         key: RouteNames.HEIGHT_SELECTION_SCREEN,
         component:HeightSelectionScreen,
     },
     {
         key: RouteNames.WEIGHT_SELECTION_SCREEN,
         component:WeightSelectionScreen,
+    },
+    {
+        key: RouteNames.WEIGHT_GOAL_SELECTION_SCREEN,
+        component:WeightGoalSelectionScreen,
+    },
+    {
+        key: RouteNames.PLAN_CONFIRMATION_SCREEN,
+        component:PlanConfirmationScreen,
     },
     {
         key: RouteNames.GOAL_SELECTION_SCREEN,
@@ -152,6 +166,10 @@ export const AppRoutes = [
                     {
                         key: RouteNames.ACCOUNT_SCREEN,
                         component: AccountScreen,
+                    },
+                    {
+                        key: RouteNames.USER_PROFILE_SCREEN,
+                        component: UserProfileScreen,
                     },
 
                 ],

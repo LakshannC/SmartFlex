@@ -111,3 +111,8 @@ export const regexes = {
     mobile_number_validation: /^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{3,4}$/,
     email_validation: /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,}$/,
 };
+
+export const AppData = {
+    APP_NAME: 'SmartFlex',
+    VERSION: '1.0',
+};

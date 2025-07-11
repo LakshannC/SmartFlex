@@ -3,7 +3,7 @@ import {Image, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {colors, dimensions, fontFamilies, fontSizes} from "../configuration/constants";
 import * as Actions from "../navigation/NavActions";
 
-const arrow = require('../assets/images/icon_left_arrow_2.webp');
+const arrow = require('../assets/images/icon_left_arrow.webp');
 const NavigationBar = ({title, hideBackButton, actionIcon, onAction}) => {
     return (
         <View style={styles.container}>
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
         flex: 1,
         fontFamily: fontFamilies.RobotoRegular,
         fontSize: fontSizes.fontXXLarge,
-        color: colors.black,
+        color: colors.white,
         textAlign: 'center',
         paddingHorizontal: 8,
     },
