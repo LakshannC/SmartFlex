@@ -1,17 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useSelector } from 'react-redux';
 import { colors, dimensions, fontFamilies, fontSizes } from "../../configuration/constants";
 import ButtonField from "../../components/ButtonField";
 import { generatePlanRequest } from "../../service/networkRequests/planRequests";
 import { showErrorToast, showSuccessToast } from "../../util/toastActions";
-import HomeScreen from "../tabs/home/HomeScreen";
 import * as Actions from "../../navigation/NavActions";
 import {RouteNames} from "../../navigation/AppRoutes";
 
 const PlanConfirmationScreen = ({ navigation }) => {
-    const fullState = useSelector(state => state);
-    console.log('Redux State:', fullState);
 
     const {
         age,
@@ -20,6 +17,11 @@ const PlanConfirmationScreen = ({ navigation }) => {
         current_weight,
         goal_weight
     } = useSelector(state => state.workoutReducer);
+
+
+    React.useEffect(() => {
+        console.log('Workout reducerrrrrrrrrr:', { age, gender, height, current_weight, goal_weight });
+    }, [age, gender, height, current_weight, goal_weight]);
 
     const difference = goal_weight - current_weight;
     const goalType = difference > 0 ? 'Gain' : difference < 0 ? 'Lose' : 'Maintain';

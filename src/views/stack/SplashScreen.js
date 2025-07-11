@@ -1,5 +1,5 @@
-import {ActivityIndicator, Image, StyleSheet, View} from "react-native";
-import {colors, dimensions} from "../../configuration/constants";
+import { Image, StyleSheet, View} from "react-native";
+import {dimensions} from "../../configuration/constants";
 import {useEffect} from "react";
 import * as Actions from "../../navigation/NavActions";
 import {RouteNames} from "../../navigation/AppRoutes";
@@ -42,7 +42,6 @@ const SplashScreen = ({navigation}) => {
     return (
         <View style={styles.container}>
             <Image source={logo} style={styles.logo} resizeMode={'contain'}/>
-            {/*<ActivityIndicator size={'large'} color={colors.primary}/>*/}
         </View>
     )
 }
