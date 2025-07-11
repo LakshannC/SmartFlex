@@ -10,7 +10,7 @@ const TipsScreen = (navigation) =>{
             level: 'Intermediate',
             duration: '40-50 min',
             calories: '250 kcal',
-            image: require('../../../assets/images/icon_homeworkout.webp'), // replace with your icon
+            image: require('../../../assets/images/icon_homeworkout.webp'),
         },
         {
             id: '2',

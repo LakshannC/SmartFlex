@@ -1,13 +1,11 @@
 import {View, StyleSheet, Text, TouchableOpacity, Image, FlatList} from "react-native";
 import {colors, dimensions, fontFamilies, fontSizes} from "../../configuration/constants";
-import ButtonField from "../../components/ButtonField";
 import {useState} from "react";
 import {useDispatch, useSelector} from "react-redux";
-import {showErrorToast, showInfoToast} from "../../util/toastActions";
-import {startWorkout, updateWorkoutState, updateWorkoutType} from "../../redux/slices/workoutSlice";
-import * as Actions from "../../navigation/NavActions";
-import {RouteNames} from "../../navigation/AppRoutes";
-import {states, workout_states} from "../../configuration/workoutData";
+import {showErrorToast} from "../../util/toastActions";
+import {updateWorkoutState, updateWorkoutType} from "../../redux/slices/workoutSlice";
+
+import {workout_states} from "../../configuration/workoutData";
 
 const sampleWorkout = {
     type: 'Home',
