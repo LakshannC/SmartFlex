@@ -9,6 +9,8 @@ import {showErrorToast, showSuccessToast} from "../../../util/toastActions";
 import * as Action from "../../../navigation/NavActions";
 import {RouteNames} from "../../../navigation/AppRoutes";
 import ConfirmationModal from "../../../components/ConfirmationModal";
+import {getAppTokens} from "../../../util/asyncStorageActions";
+import {getUserDetailsRequest} from "../../../service/networkRequests/userRequests";
 
 const PlanScreen = (navigation) => {
 
@@ -17,8 +19,8 @@ const PlanScreen = (navigation) => {
     const [pendingWorkout, setPendingWorkout] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [selectedId,setSelectedId] = useState(0);
-    // const workout =
-
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [workoutPlans, setWorkoutPlans] = useState([]);
 
     useEffect(() => {
@@ -37,6 +39,26 @@ const PlanScreen = (navigation) => {
         }
 
     }
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const {accessToken} = await getAppTokens();
+            if (accessToken) {
+                await fetchUserDetails();
+            }
+        };
+
+        fetchData();
+
+    }, []);
+
+    const fetchUserDetails = async () => {
+        const result = await getUserDetailsRequest();
+        if (result) {
+            setFirstName(result?.data?.data?.firstName);
+            setLastName(result?.data?.data?.lastName);
+        }
+    };
 
     const deleteWorkoutPlan = async (id) => {
         console.log("selected Id delete", id);
@@ -83,8 +105,8 @@ const PlanScreen = (navigation) => {
 
             <View style={styles.profileCard}>
                 <View style={styles.weightInfo}>
-                    <Text style={styles.profileName}>Lakshan</Text>
-                    <Text style={styles.profileName}>Chathuranga</Text>
+                    <Text style={styles.profileName}>{firstName}</Text>
+                    <Text style={styles.profileName}>{lastName}</Text>
                 </View>
 
                 <View style={styles.weightInfo}>
@@ -186,7 +208,7 @@ const styles = StyleSheet.create({
     card: {
         flex: 1,
         width:"100%",
-        backgroundColor: colors.primary,
+        backgroundColor: colors.txtField,
         borderRadius: 16,
         flexDirection: 'row',
         padding: dimensions.paddingLevel2,
@@ -203,16 +225,17 @@ const styles = StyleSheet.create({
         width: 90,
         height: 90,
         marginRight: 12,
+        tintColor: colors.white,
     },
     cardDetails: {},
     planName: {
-        color: 'black',
+        color: colors.white,
         fontSize: fontSizes.fontMedium,
         fontFamily: fontFamilies.RobotoBold,
         marginBottom: 4,
     },
     planInfo: {
-        color: 'black',
+        color: colors.white,
         fontSize: fontSizes.fontSmall,
         marginBottom: 2,
     },
@@ -221,7 +244,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     viewButton: {
-        backgroundColor: colors.secondary ?? '#1e90ff',
+        backgroundColor: colors.primary ?? '#1e90ff',
         paddingVertical: 6,
         paddingHorizontal: 18,
         borderRadius: 8,

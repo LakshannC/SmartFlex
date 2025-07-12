@@ -41,6 +41,9 @@ const PlanConfirmationScreen = ({ navigation }) => {
             if (result?.code === 200) {
                 showSuccessToast('Workout plan generated successfully!');
                 Actions.reset(RouteNames.TAB_SCREEN);
+                setTimeout(() => {
+                    Actions.navigate(RouteNames.PLAN_TAB);
+                }, 100);
             } else {
                 showErrorToast(result?.error?.message || 'Failed to generate plan');
             }
