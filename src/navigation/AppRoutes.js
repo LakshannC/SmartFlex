@@ -12,6 +12,8 @@ import HeightSelectionScreen from "../views/stack/HeightSelectionScreen";
 import WeightSelectionScreen from "../views/stack/WeightSelectionScreen";
 import GoalSelectionScreen from "../views/stack/GoalSelectionScreen";
 import PhysicalLevelSelectionScreen from "../views/stack/PhysicalLevelSelectionScreen";
+import WorkoutStartScreen from "../views/stack/WorkoutStartScreen";
+import TestScreen from "../views/stack/TestScreen";
 import UserProfileScreen from "../views/tabs/account/UserProfileScreen";
 import AgeSelectionScreen from "../views/stack/AgeSelectionScreen";
 import WeightGoalSelectionScreen from "../views/stack/WeightGoalSelectionScreen";
@@ -34,11 +36,8 @@ export const RouteNames ={
     REGISTER_SCREEN: 'REGISTER_SCREEN',
 
     GENDER_SELECTION_SCREEN: 'GENDER_SELECTION_SCREEN',
-    AGE_SELECTION_SCREEN: 'AGE_SELECTION_SCREEN',
     HEIGHT_SELECTION_SCREEN: 'HEIGHT_SELECTION_SCREEN',
     WEIGHT_SELECTION_SCREEN: 'WEIGHT_SELECTION_SCREEN',
-    WEIGHT_GOAL_SELECTION_SCREEN: 'WEIGHT_GOAL_SELECTION_SCREEN',
-    PLAN_CONFIRMATION_SCREEN: 'PLAN_CONFIRMATION_SCREEN',
     GOAL_SELECTION_SCREEN: 'GOAL_SELECTION_SCREEN',
     PHYSICAL_LEVEL_SELECTION_SCREEN: 'PHYSICAL_LEVEL_SELECTION_SCREEN',
 
@@ -57,12 +56,27 @@ export const RouteNames ={
     ACCOUNT_SCREEN: 'ACCOUNT_SCREEN',
     USER_PROFILE_SCREEN: 'USER_PROFILE_SCREEN',
 
+    WORKOUT_START_SCREEN:'WORKOUT_START_SCREEN',
+    WEIGHT_GOAL_SELECTION_SCREEN:'WEIGHT_GOAL_SELECTION_SCREEN',
+    AGE_SELECTION_SCREEN:'AGE_SELECTION_SCREEN',
+    PLAN_CONFIRMATION_SCREEN:'PLAN_CONFIRMATION_SCREEN',
+
+    TEST_SCREEN:'TEST_SCREEN',
+
 };
 
 export const AppRoutes = [
     {
+      key:RouteNames.WORKOUT_START_SCREEN,
+      component:WorkoutStartScreen,
+    },
+    {
         key: RouteNames.SPLASH_SCREEN,
         component: SplashScreen,
+    },
+    {
+        key: RouteNames.TEST_SCREEN,
+        component: TestScreen,
     },
     {
         key: RouteNames.WELCOME_SCREEN,
