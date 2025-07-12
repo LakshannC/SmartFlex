@@ -2,7 +2,7 @@ import {Dimensions, FlatList, Image, Modal, StyleSheet, Text, TouchableOpacity, 
 import {colors, dimensions, fontFamilies, fontSizes} from "../../../configuration/constants";
 import {useCallback, useEffect, useState} from "react";
 import {deletePlanRequest, getAllPlansRequest} from "../../../service/networkRequests/planRequests";
-import workoutImg from "../../../assets/images/icon_dumbell.png";
+import workoutImg from "../../../assets/images/icon_dumbell.webp";
 import {useDispatch, useSelector} from "react-redux";
 import {resetWorkoutState, setCurrentWorkout} from "../../../redux/slices/workoutSlice";
 import {showErrorToast, showSuccessToast} from "../../../util/toastActions";

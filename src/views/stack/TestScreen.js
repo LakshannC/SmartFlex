@@ -15,7 +15,7 @@ const TestScreen= () => {
     return (
         <View style={styles.container}>
             <Image
-                source={require('../../assets/images/icon_dumbell.png')}
+                source={require('../../assets/images/icon_dumbell.webp')}
                 style={styles.image}
                 resizeMode="contain"
             />
