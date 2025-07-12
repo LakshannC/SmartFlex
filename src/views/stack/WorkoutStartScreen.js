@@ -1,11 +1,23 @@
 import {View, StyleSheet, Text, TouchableOpacity, Image, FlatList} from "react-native";
 import {colors, dimensions, fontFamilies, fontSizes} from "../../configuration/constants";
-import {useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {useDispatch, useSelector} from "react-redux";
 import {showErrorToast} from "../../util/toastActions";
-import {updateWorkoutState, updateWorkoutType} from "../../redux/slices/workoutSlice";
+import {
+    endRest,
+    nextSet,
+    resetWorkoutState, skipCurrentExercise,
+    startWorkout,
+    updateWorkoutState,
+    updateWorkoutType
+} from "../../redux/slices/workoutSlice";
 
 import {workout_states} from "../../configuration/workoutData";
+import NavigationBar from "../../components/NavigationBar";
+import * as Actions from "../../navigation/NavActions";
+import homeIcon from "../../assets/images/icon_homeworkout.webp";
+import dumbellIcon from "../../assets/images/icon_homeworkout.webp";
+import WorkoutCompleteScreen from "./workoutViews/WorkoutCompleteScreen";
 
 const sampleWorkout = {
     type: 'Home',
@@ -35,15 +47,94 @@ const WorkoutStartScreen = () => {
 
     const dispatch = useDispatch();
 
-    const workoutType = useSelector(state => state.workoutReducer.workoutType);
-    const workoutList = useSelector(state => state.workoutReducer.workoutList);
-    const activeExercise = useSelector(state => state.workoutReducer.activeExerciseId);
-    const workoutState = useSelector(state => state.workoutReducer.workoutState);
+    const currentWorkout = useSelector(state => state.workoutProcessReducer.currentWorkout);
+    const workoutType = useSelector(state => state.workoutProcessReducer.workoutType);
+    const exercisesList = useSelector(state => state.workoutProcessReducer.exercisesList);
+    const activeExerciseId = useSelector(state => state.workoutProcessReducer.currentExerciseIndex);
+    const workoutState = useSelector(state => state.workoutProcessReducer.workoutState);
     const [selectedOption, setSelectedOption] = useState(null);
+    const currentExercise = exercisesList[activeExerciseId];
+    const currentSet = useSelector(state => state.workoutProcessReducer.currentSet);
+    const [countdown, setCountdown] = useState(null);
+
+
+    const selectWorkoutType = useCallback(() => {
+        console.log("SELECTED OPTION:", selectedOption);
+        if (selectedOption === "home") {
+            console.log("HOME");
+            dispatch(startWorkout(
+                currentWorkout?.homeVersion?.exercises
+            ));
+            console.log("Exercise Set", currentWorkout);
+        } else if (selectedOption === "gym") {
+            dispatch(startWorkout(
+                currentWorkout?.equipmentVersion?.exercises
+            ));
+        } else {
+            dispatch(resetWorkoutState());
+            Actions.goBack();
+        }
+        dispatch(updateWorkoutType(selectedOption));
+        // dispatch(updateWorkoutState(workout_states.START));
+    }, [selectedOption, currentWorkout, dispatch]);
+
+
+    useEffect(() => {
+        console.log(currentWorkout);
+        console.log("Exercise set", exercisesList);
+        console.log("Workout State", workoutState);
+    }, [currentWorkout, workoutState, exercisesList]);
+
+    // useEffect(() => {
+    //     if (currentExercise?.duration) {
+    //         setCountdown(currentExercise.duration);
+    //     }
+    // }, [currentExercise]);
+
+    useEffect(() => {
+        if (!currentExercise) return;
+
+        if (workoutState === workout_states.IN_PROGRESS) {
+            // Set countdown for the exercise rep duration (if exists)
+            if (currentExercise.duration) {
+                setCountdown(currentExercise.duration);
+            } else {
+                setCountdown(null); // Manual sets
+            }
+        } else if (workoutState === workout_states.REST) {
+            // Set countdown for the rest duration between sets
+            if (currentExercise.rest) {
+                setCountdown(currentExercise.rest);
+            }
+        }
+    }, [workoutState, currentSet, activeExerciseId, currentExercise]);
+
+
+    useEffect(() => {
+        let timer;
+
+        if (countdown > 0) {
+            timer = setInterval(() => {
+                setCountdown(prev => prev - 1);
+            }, 1000);
+        }
+
+        if (countdown === 0 && workoutState === workout_states.REST) {
+            dispatch(endRest());
+        }
+
+        if (countdown === 0) {
+            clearInterval(timer);
+            dispatch(nextSet());
+        }
+
+        return () => clearInterval(timer);
+    }, [countdown, workoutState, dispatch]);
 
     return (
         <View style={styles.container}>
-
+            <NavigationBar
+                title={'Workouts'} hideBackButton={!(workoutState === workout_states.TYPE_SELECTION ||  workoutState === workout_states.START) }/>
             {
                 workoutState === workout_states.TYPE_SELECTION ?
                     (<>
@@ -91,9 +182,8 @@ const WorkoutStartScreen = () => {
                                 onPress={() => {
 
                                     if (selectedOption) {
-                                        console.log("SELECTED OPTION:", selectedOption);
-                                        dispatch(updateWorkoutType(selectedOption));
-                                        dispatch(updateWorkoutState(workout_states.IN_PROGRESS));
+
+                                        selectWorkoutType(selectedOption);
 
                                     } else {
                                         showErrorToast("Select a preferred workout type");
@@ -109,37 +199,37 @@ const WorkoutStartScreen = () => {
                     workoutState === workout_states.START ?
                         (<>
 
-                            {/* Title Bar */}
+
                             <View style={styles.header}>
                                 <Text style={styles.headerText}>Recommended Workout</Text>
                             </View>
 
-                            {/* Icon + Info */}
-                            <View style={styles.infoContainer}>
-                                <Image source={sampleWorkout.icon} style={styles.icon} resizeMode="contain"/>
-                                <View>
-                                    <Text style={styles.workoutType}>{sampleWorkout.type}</Text>
-                                    <Text style={styles.duration}>{sampleWorkout.duration}</Text>
-                                </View>
 
+                            <View style={styles.infoContainer}>
+                                <Image source={workoutType ? homeIcon : dumbellIcon} style={styles.icon}
+                                       resizeMode="contain"/>
+                                <View>
+                                    <Text style={styles.workoutType}>{workoutType}</Text>
+                                    <Text style={styles.duration}>{currentWorkout?.duration}</Text>
+                                </View>
                             </View>
 
-                            {/* Exercise List */}
+
                             <View style={styles.exerciseList}>
                                 <FlatList
-                                    data={sampleWorkout.exercises}
-                                    keyExtractor={(item) => item.id}
+                                    data={exercisesList}
+                                    keyExtractor={(item, index) => item.id}
                                     style={styles.scrollContainer}
                                     showsVerticalScrollIndicator={false}
-                                    renderItem={({item}) => (
+                                    renderItem={({item, index}) => (
                                         <View
                                             style={[
                                                 styles.exerciseItem,
-                                                item.isActive ? styles.activeExerciseItem : styles.inactiveExerciseItem,
+                                                index === activeExerciseId ? styles.activeExerciseItem : styles.inactiveExerciseItem,
                                             ]}
                                         >
                                             <Text style={styles.exerciseText}>{item.name}</Text>
-                                            <Text style={styles.exerciseText}>{item.sets}</Text>
+                                            <Text style={styles.exerciseText}>{item.sets}X</Text>
                                         </View>
                                     )}
                                 />
@@ -149,14 +239,9 @@ const WorkoutStartScreen = () => {
                                     style={styles.continueButton}
                                     onPress={() => {
 
-                                        if (selectedOption) {
-                                            console.log("SELECTED OPTION:", selectedOption);
-                                            dispatch(updateWorkoutType(selectedOption));
-                                            dispatch(updateWorkoutState(workout_states.IN_PROGRESS));
 
-                                        } else {
-                                            showErrorToast("Select a preferred workout type");
-                                        }
+                                        dispatch(updateWorkoutState(workout_states.IN_PROGRESS));
+
 
                                     }}
                                 >
@@ -170,15 +255,24 @@ const WorkoutStartScreen = () => {
 
 
                                 <View style={styles.header}>
-                                    <Text style={styles.headerText}>Pushups</Text>
+                                    <Text style={styles.headerText}>{currentExercise?.name ?? 'Exercise Name'}</Text>
                                 </View>
 
 
                                 <View style={styles.infoContainer}>
                                     <Image source={sampleWorkout.icon} style={styles.icon} resizeMode="contain"/>
                                     <View>
-                                        <Text style={styles.workoutType}>10 Reps</Text>
-                                        <Text style={styles.duration}>1 Set of 4</Text>
+                                        {
+                                            currentExercise?.duration ?
+                                                <Text style={styles.workoutType}>⏱️ {countdown}s</Text>
+                                                :
+                                                currentExercise?.reps ?
+                                                    <Text style={styles.workoutType}>{currentExercise?.reps} Reps</Text>
+                                                    :
+                                                    <Text style={styles.workoutType}>10 Reps</Text>
+                                        }
+
+                                        <Text style={styles.duration}>{currentSet} Set of {currentExercise?.sets}</Text>
                                     </View>
 
                                 </View>
@@ -197,23 +291,27 @@ const WorkoutStartScreen = () => {
                                         style={[
                                             styles.exerciseItem,
                                             styles.inactiveExerciseItem,
-                                            {height:dimensions.heightLevel10}
+                                            {height: dimensions.heightLevel10}
                                         ]}
                                     >
-                                        <Text style={styles.exerciseText}>Form diamond with hands, perform push-up</Text>
+                                        <Text style={styles.exerciseText}>{currentExercise?.instruction}</Text>
                                     </View>
                                 </View>
-                                <View style={[styles.exerciseList,{marginTop:dimensions.heightLevel2,height:dimensions.heightLevel10*1.5,backgroundColor:colors.gray}]}>
+                                <View style={[styles.exerciseList, {
+                                    marginTop: dimensions.heightLevel2,
+                                    height: dimensions.heightLevel10 * 1.5,
+                                    backgroundColor: colors.gray
+                                }]}>
                                     <FlatList
-                                        data={sampleWorkout.exercises}
-                                        keyExtractor={(item) => item.id}
+                                        data={exercisesList}
+                                        keyExtractor={(item,index) => item.id}
                                         style={styles.scrollContainer}
                                         showsVerticalScrollIndicator={false}
-                                        renderItem={({item}) => (
+                                        renderItem={({item,index}) => (
                                             <View
                                                 style={[
                                                     styles.exerciseItem,
-                                                    item.isActive ? styles.activeExerciseItem : styles.inactiveExerciseItem,
+                                                    index === activeExerciseId ? styles.activeExerciseItem : styles.inactiveExerciseItem,
                                                 ]}
                                             >
                                                 <Text style={styles.exerciseText}>{item.name}</Text>
@@ -227,16 +325,7 @@ const WorkoutStartScreen = () => {
                                         <TouchableOpacity
                                             style={styles.continueButton}
                                             onPress={() => {
-
-                                                if (selectedOption) {
-                                                    console.log("SELECTED OPTION:", selectedOption);
-                                                    dispatch(updateWorkoutType(selectedOption));
-                                                    dispatch(updateWorkoutState(workout_states.IN_PROGRESS));
-
-                                                } else {
-                                                    showErrorToast("Select a preferred workout type");
-                                                }
-
+                                                dispatch(nextSet());
                                             }}
                                         >
 
@@ -248,14 +337,7 @@ const WorkoutStartScreen = () => {
                                             style={styles.skipButton}
                                             onPress={() => {
 
-                                                if (selectedOption) {
-                                                    console.log("SELECTED OPTION:", selectedOption);
-                                                    dispatch(updateWorkoutType(selectedOption));
-                                                    dispatch(updateWorkoutState(workout_states.IN_PROGRESS));
-
-                                                } else {
-                                                    showErrorToast("Select a preferred workout type");
-                                                }
+                                              dispatch(skipCurrentExercise());
 
                                             }}
                                         >
@@ -273,57 +355,29 @@ const WorkoutStartScreen = () => {
 
                                 <>
                                     <View style={styles.header}>
-                                        <Text style={styles.headerText}>Pushups</Text>
+                                        <Text style={styles.headerText}>Rest</Text>
                                     </View>
 
 
-                                    <View style={styles.infoContainer}>
-                                        <Image source={sampleWorkout.icon} style={styles.icon} resizeMode="contain"/>
-                                        <View>
-                                            <Text style={styles.workoutType}>10 Reps</Text>
-                                            <Text style={styles.duration}>1 Set of 4</Text>
-                                        </View>
 
-                                    </View>
-
-                                    <View style={styles.exerciseList}>
-                                        <View
-                                            style={[
-                                                styles.exerciseItem,
-                                                styles.activeExerciseItem
-                                            ]}
-                                        >
-                                            <Text style={styles.exerciseText}>Instructions</Text>
-                                        </View>
+                                    <View style={[styles.exerciseList,{marginTop:dimensions.heightLevel10}]}>
                                         <View
                                             style={[
                                                 styles.exerciseItem,
                                                 styles.inactiveExerciseItem,
-                                                {height:dimensions.heightLevel10}
+                                                {height: dimensions.heightLevel10,alignItems:'center',justifyContent:'center'}
                                             ]}
                                         >
-                                            <Text style={styles.exerciseText}>Form diamond with hands, perform push-up</Text>
+
+                                            <View style={{alignItems:'center'}}>
+                                                <Text style={styles.duration}>Rest timer</Text>
+                                                <Text style={styles.workoutType}>⏱️ {countdown} s</Text>
+
+                                            </View>
+
                                         </View>
                                     </View>
-                                    <View style={[styles.exerciseList,{marginTop:dimensions.heightLevel2,height:dimensions.heightLevel10*1.5,backgroundColor:colors.gray}]}>
-                                        <FlatList
-                                            data={sampleWorkout.exercises}
-                                            keyExtractor={(item) => item.id}
-                                            style={styles.scrollContainer}
-                                            showsVerticalScrollIndicator={false}
-                                            renderItem={({item}) => (
-                                                <View
-                                                    style={[
-                                                        styles.exerciseItem,
-                                                        item.isActive ? styles.activeExerciseItem : styles.inactiveExerciseItem,
-                                                    ]}
-                                                >
-                                                    <Text style={styles.exerciseText}>{item.name}</Text>
-                                                    <Text style={styles.exerciseText}>{item.sets}</Text>
-                                                </View>
-                                            )}
-                                        />
-                                    </View>
+
                                     <View style={[styles.buttonContainer, {flexDirection: 'row'}]}>
                                         <View style={{flex: 1, paddingHorizontal: dimensions.paddingLevel1}}>
                                             <TouchableOpacity
@@ -350,14 +404,7 @@ const WorkoutStartScreen = () => {
                                                 style={styles.skipButton}
                                                 onPress={() => {
 
-                                                    if (selectedOption) {
-                                                        console.log("SELECTED OPTION:", selectedOption);
-                                                        dispatch(updateWorkoutType(selectedOption));
-                                                        dispatch(updateWorkoutState(workout_states.IN_PROGRESS));
-
-                                                    } else {
-                                                        showErrorToast("Select a preferred workout type");
-                                                    }
+                                                   dispatch(endRest());
 
                                                 }}
                                             >
@@ -372,7 +419,7 @@ const WorkoutStartScreen = () => {
 
 
                                 :
-                                console.log("3")
+                                <WorkoutCompleteScreen/>
             }
 
 

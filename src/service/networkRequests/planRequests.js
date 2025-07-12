@@ -71,6 +71,7 @@ export const getPlanDetailsRequest = async (planID) => {
 
 
 export const deletePlanRequest = async (planID) => {
+    console.log('Plan Deletion');
     const result = await httpDELETE({
         url: `${PLAN_API.DELETE_PLAN_BY_ID_URL}/${planID}`
     });
@@ -83,4 +84,5 @@ export const deletePlanRequest = async (planID) => {
             showErrorToast();
         }
     }
+
 }
